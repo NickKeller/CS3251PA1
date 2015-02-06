@@ -8,7 +8,7 @@ int main(int argc, char *argv[]){
 	}
 	
 	int port = argv[1];
-	
+	printf("Binding server on port %d\n",port);
 	return 0;
 }
 
