@@ -12,17 +12,22 @@
 #ifndef UDP_SERVER_H
 #define UDP_SERVER_H
 
-enum {REQ=0, CHA, RESP, ACK};
-
+enum{REQ=0,CHA,RESP,ACK,NACK};
+/*
 typedef struct _CONN_INFO{
 	int socket;
 	socklen_t addrlen;
-	struct sockaddr *remote_addr;
-} CONN_INFO;
+	struct sockaddr *addr;
+} CONN_INFO;*/
+
+typedef struct _MESSAGE{
+	char buffer[1024];
+	int type;
+} MESSAGE;
 
 //function declarations
 void print_use_and_exit(void);
-CONN_INFO* setup_socket(char* port);
+//CONN_INFO* setup_socket(char* port);
 
 
 #endif//end udp-server.h
