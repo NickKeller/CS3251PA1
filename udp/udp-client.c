@@ -10,12 +10,12 @@ int main(int argc, char *argv[]){
 	//create a socket
 	CONN_INFO* connection = setup_socket("127.0.0.1",port);
 	//created socket, now to make data and sendto my server
-	char text[] = "This is a test message for receiving";
+	char text[] = "This is a test message for receiving\n";
 	int msgSize = sizeof(MESSAGE);
 	MESSAGE* message = calloc(1,msgSize);
 	memcpy(message->buffer,text,sizeof(text));
 	message->type = REQ;
-	int numBytesSent = sendto(connection->socket,message,msgSize,0,
+	int numBytesSent = sendto(connection->socket,text,sizeof(text),0,
 							  connection->remote_addr,connection->addrlen);
 	printf("Message size: %d, num bytes sent: %d\n",msgSize,numBytesSent);
 	return 0;

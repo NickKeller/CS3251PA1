@@ -19,8 +19,9 @@ int main(int argc, char* argv[]){
 	MESSAGE* message = calloc(1,msgSize);
 	memcpy(message->buffer,text,sizeof(text));
 	message->type = REQ;
-	int numBytesSent = send(connection->socket,message,msgSize,0);
-	printf("Message size: %d, num bytes sent: %d\n",msgSize,numBytesSent);
+	printf("Size of message buffer:%d\nSTRLEN:%d\n",sizeof(message->buffer),strlen(message->buffer));
+	int numBytesSent = send(connection->socket,text,sizeof(text),0);
+	printf("Message size: %d, num bytes sent: %d\n",sizeof(text),numBytesSent);
 	close(connection->socket);
 }
 

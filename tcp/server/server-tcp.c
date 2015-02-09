@@ -54,15 +54,16 @@ int main(int argc, char* argv[]){
 		printf("Connection accepted\n");
 		//ready to receive from the socket
 		MESSAGE *message = calloc(1,sizeof(MESSAGE));
+		char buffer[1024];
 		int numBytesReceived = 0;
 		printf("----------------------Waiting for Message----------------------\n");
-		while((numBytesReceived += recv(recvSock,message,sizeof(MESSAGE),0)) < sizeof(MESSAGE));
+/*		while((*/numBytesReceived += recv(recvSock,buffer,sizeof(buffer),0);//) < sizeof(MESSAGE));
 		if(numBytesReceived == -1){
 			perror("Recv failed\n");
 			exit(0);
 		}
 		printf("Num Bytes Received:%d\nMessage Received is:%s\n",
-				numBytesReceived,message->buffer);		
+				numBytesReceived,buffer);		
 	}
 	
 	return 0;

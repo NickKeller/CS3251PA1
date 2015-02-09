@@ -44,18 +44,22 @@ int main(int argc, char *argv[]){
 	else{
 		printf("Binding failed\n");
 	}
+	//only allocate for the buffers once, and just zero it out when done processing
+	MESSAGE* recvBuffer = calloc(1,sizeof(MESSAGE));
 	
 	//now, infinitely wait and process requests as they come in
 	while(1){
 		printf("-----------------Waiting to receive-----------------\n");
-		MESSAGE* recvBuffer = calloc(1,sizeof(MESSAGE));
+		
 		int sizeReceived = 0;
-		while(sizeReceived < sizeof(MESSAGE)){
-			sizeReceived += recvfrom(sock,recvBuffer,sizeof(MESSAGE),0,
-									(struct sockaddr*)&remaddr,
-		&addrlen);
-		printf("Message Type:%d\nMessage Received:%s\nMessage size:%d\nPort Received From:%d\n",
-				recvBuffer->type,recvBuffer->buffer,sizeReceived,remaddr.sin_port);
+		char buffer[1024];
+		char *current = &buffer[0];
+		while(*current != '\n'){
+			sizeReceived += recvfrom(sock,current,1,0,
+									(struct sockaddr*)&remaddr,&addrlen);
+			printf("Message Received:%s\nMessage size:%d\nPort Received From:%d\n",
+					buffer,sizeReceived,remaddr.sin_port);
+			current++;
 		}
 		//process the request
 		//MESSAGE* response = process(recvBuffer,port);
@@ -63,6 +67,8 @@ int main(int argc, char *argv[]){
 		int numBytesSent = 0;
 		//if((numBytesSent = sendto(sock, 
 		
+		//zero out the recv and response buffers
+		memset(recvBuffer,0,sizeof(MESSAGE));
 		
 	}
 	return 0;
