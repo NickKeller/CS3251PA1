@@ -25,6 +25,11 @@ typedef struct _MESSAGE{
 	int type;
 } MESSAGE;
 
+typedef struct _CLIENT{
+	int last_type;
+	int port;
+} CLIENT;
+
 //function declarations
 void print_use_and_exit(void);
 //CONN_INFO* setup_socket(char* port);

@@ -2,7 +2,10 @@
 
 //usernames and passwords
 char *usernames[] = {"user1","user2","user3"};
-char *passwords{} = {"pass1","pass2","pass3"};
+char *passwords[] = {"pass1","pass2","pass3"};
+
+CLIENT* client1;
+CLIENT* client2;
 
 
 int main(int argc, char *argv[]){
@@ -10,6 +13,10 @@ int main(int argc, char *argv[]){
 	if(argc < 2){
 		print_use_and_exit();
 	}
+	
+	//initialize the clients
+	client1 = calloc(1,sizeof(CLIENT));
+	client2 = calloc(1,sizeof(CLIENT));
 	
 	int port = atoi(argv[1]);
 	//create a socket to bind on
@@ -40,18 +47,22 @@ int main(int argc, char *argv[]){
 	
 	//now, infinitely wait and process requests as they come in
 	while(1){
-		printf("Waiting to receive\n-----------------\n");
+		printf("-----------------Waiting to receive-----------------\n");
 		MESSAGE* recvBuffer = calloc(1,sizeof(MESSAGE));
 		int sizeReceived = 0;
-		char text1[] = "This is a test message for receiving";
-		char *text = calloc(1,sizeof(text1));
-		while(sizeReceived < sizeof(text1)){
+		while(sizeReceived < sizeof(MESSAGE)){
 			sizeReceived += recvfrom(sock,recvBuffer,sizeof(MESSAGE),0,
 									(struct sockaddr*)&remaddr,
 		&addrlen);
-		printf("Message Type:%d\nMessage Received:%s\nMessage size:%d\n---------------\n",
-				recvBuffer->type,recvBuffer->buffer,sizeReceived);
+		printf("Message Type:%d\nMessage Received:%s\nMessage size:%d\nPort Received From:%d\n",
+				recvBuffer->type,recvBuffer->buffer,sizeReceived,remaddr.sin_port);
 		}
+		//process the request
+		//MESSAGE* response = process(recvBuffer,port);
+		//send the response
+		int numBytesSent = 0;
+		//if((numBytesSent = sendto(sock, 
+		
 		
 	}
 	return 0;

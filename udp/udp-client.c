@@ -14,11 +14,10 @@ int main(int argc, char *argv[]){
 	int msgSize = sizeof(MESSAGE);
 	MESSAGE* message = calloc(1,msgSize);
 	memcpy(message->buffer,text,sizeof(text));
-	message->type = 123;
+	message->type = REQ;
 	int numBytesSent = sendto(connection->socket,message,msgSize,0,
 							  connection->remote_addr,connection->addrlen);
 	printf("Message size: %d, num bytes sent: %d\n",msgSize,numBytesSent);
-	
 	return 0;
 }
 

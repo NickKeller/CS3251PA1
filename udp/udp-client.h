@@ -12,6 +12,7 @@
 #ifndef UDP_CLIENT_H
 #define UDP_CLIENT_H
 
+enum{REQ=0,CHA,RESP,ACK,NACK};
 
 typedef struct _CONN_INFO{
 	int socket;
