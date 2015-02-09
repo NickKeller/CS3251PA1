@@ -35,6 +35,7 @@ int main(int argc, char* argv[]){
 		return 0;
 	}
 	//now, listen for incoming connections, and allow up to 2
+	printf("Listening for connections\n");
 	if(listen(sock,2) < 0){
 		perror("Listen failed\n");
 		return 0;
@@ -42,12 +43,17 @@ int main(int argc, char* argv[]){
 	
 	//ready for connections
 	while(1){
-		int recvSock;
 		struct sockaddr_in recvaddr;
 		int recvAddrLen = sizeof(recvaddr);
-		while((recvSock = accept(sock,(struct sockaddr *)&recvaddr,&recvAddrLen)) < 0){
-			
-		}
+		printf("Accepting an available connection\n");
+		int recvSock = accept(sock,(struct sockaddr *)&recvaddr,&recvAddrLen);
+		printf("Connection accepted\n");
+		//ready to receive from the socket
+		MESSAGE *message = calloc(1,sizeof(MESSAGE));
+		int numBytesReceived = 0;
+		printf("----------------------Waiting for Message----------------------\n");
+		while((numBytesReceived += recv(sock,message,sizeof(MESSAGE),0)) < sizeof(MESSAGE));
+		printf("Message Received is:%s\n",message->buffer);		
 	}
 	
 	return 0;
