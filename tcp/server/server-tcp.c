@@ -47,13 +47,22 @@ int main(int argc, char* argv[]){
 		int recvAddrLen = sizeof(recvaddr);
 		printf("Accepting an available connection\n");
 		int recvSock = accept(sock,(struct sockaddr *)&recvaddr,&recvAddrLen);
+		if(recvSock < 0){
+			perror("Accept Failed");
+			exit(0);
+		}
 		printf("Connection accepted\n");
 		//ready to receive from the socket
 		MESSAGE *message = calloc(1,sizeof(MESSAGE));
 		int numBytesReceived = 0;
 		printf("----------------------Waiting for Message----------------------\n");
-		while((numBytesReceived += recv(sock,message,sizeof(MESSAGE),0)) < sizeof(MESSAGE));
-		printf("Message Received is:%s\n",message->buffer);		
+		while((numBytesReceived += recv(recvSock,message,sizeof(MESSAGE),0)) < sizeof(MESSAGE));
+		if(numBytesReceived == -1){
+			perror("Recv failed\n");
+			exit(0);
+		}
+		printf("Num Bytes Received:%d\nMessage Received is:%s\n",
+				numBytesReceived,message->buffer);		
 	}
 	
 	return 0;
