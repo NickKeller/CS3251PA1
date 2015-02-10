@@ -1,4 +1,5 @@
 #include "udp-client.h"
+#include "md5.h"
 
 int main(int argc, char *argv[]){
 	
@@ -10,14 +11,16 @@ int main(int argc, char *argv[]){
 	//create a socket
 	CONN_INFO* connection = setup_socket("127.0.0.1",port);
 	//created socket, now to make data and sendto my server
-	char text[] = "This is a test message for receiving\n";
-	int msgSize = sizeof(MESSAGE);
-	MESSAGE* message = calloc(1,msgSize);
-	memcpy(message->buffer,text,sizeof(text));
-	message->type = REQ;
-	int numBytesSent = sendto(connection->socket,text,sizeof(text),0,
+	char request[] = "REQ: Please Connect\n";
+	int numBytesSent = sendto(connection->socket,request,sizeof(request),0,
 							  connection->remote_addr,connection->addrlen);
-	printf("Message size: %d, num bytes sent: %d\n",msgSize,numBytesSent);
+	printf("Message size: %d, num bytes sent: %d\n",sizeof(request),numBytesSent);
+	//wait for a response
+	char recvBuffer[100];
+	int numBytesRecv = recvfrom(connection->socket,recvBuffer,sizeof(recvBuffer),0,
+								connection->remote_addr,&(connection->addrlen));
+	printf("Received message: %s\n",recvBuffer);
+
 	return 0;
 }
 

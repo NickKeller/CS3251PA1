@@ -20,11 +20,6 @@ typedef struct _CONN_INFO{
 	struct sockaddr *remote_addr;
 } CONN_INFO;
 
-typedef struct _MESSAGE{
-	char buffer[1024];
-	int type;
-} MESSAGE;
-
 //function declarations
 void print_use_and_exit(void);
 CONN_INFO* setup_socket(char* host, char* port);

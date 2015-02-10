@@ -1,5 +1,5 @@
 
-FILES = udp-client.c udp-client.h
+FILES = udp-client.c udp-client.h md5.c md5.h
 
 all:
 	gcc -std=gnu99 -g -o client-udp $(FILES)
