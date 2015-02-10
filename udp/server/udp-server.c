@@ -1,5 +1,4 @@
 #include "udp-server.h"
-#include "md5.h"
 
 //usernames and passwords
 char *usernames[] = {"user1","user2","user3"};

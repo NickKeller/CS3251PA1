@@ -17,15 +17,21 @@ int main(int argc, char *argv[]){
 	printf("Message size: %d, num bytes sent: %d\n",sizeof(request),numBytesSent);
 	//wait for a response
 	char recvBuffer[100];
-	int numBytesRecv = recvfrom(connection->socket,recvBuffer,sizeof(recvBuffer),0,
+
+	int numBytesRecv = numBytesRecv = recvfrom(connection->socket,recvBuffer,sizeof(recvBuffer),0,
 								connection->remote_addr,&(connection->addrlen));
+
 	printf("Received message: %s\n",recvBuffer);
+	//compute md5 hash
+	char * response = calloc(110,sizeof(char));
+	doMD5(recvBuffer,response, "user1", "pass1");
+
 
 	return 0;
 }
 
 void print_use_and_exit(){
-	fprintf(stderr,"Usage:  server-udp port\n\n");
+	fprintf(stderr,"Usage:  client-udp port\n\n");
 	exit (EXIT_FAILURE);
 }
 
@@ -58,4 +64,15 @@ CONN_INFO* setup_socket(char* host, char* port){
 	conn_info->remote_addr = conn->ai_addr;
 	conn_info->addrlen = conn->ai_addrlen;
 	return conn_info;
+}
+
+
+void doMD5(char* buffer, char* response, char* username, char* password){
+	//concat the 3 strings
+	unsigned char *temp = calloc(strlen(buffer)+strlen(username)+strlen(password),sizeof(char));
+	strcat(temp,username);
+	strcat(temp,buffer);
+	strcat(temp,password);
+	unsigned char output[16];
+	md5(temp,strlen(temp),output);
 }

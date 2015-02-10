@@ -23,6 +23,7 @@ typedef struct _CONN_INFO{
 //function declarations
 void print_use_and_exit(void);
 CONN_INFO* setup_socket(char* host, char* port);
+void doMD5(char* buffer, char* response, char* username,char* password);
 
 
 #endif//end udp-client.h
