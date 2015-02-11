@@ -10,21 +10,33 @@ CLIENT* client2;
 char* REQ_MSG = "REQ";
 char* RES_MSG = "RES";
 
+int DEBUG;
+char *challenge;
+
 int main(int argc, char *argv[]){
+	
+	int offset = 0;
+	if(getopt(argc,argv,"d") != -1){
+		DEBUG = 1;
+		offset = 1;
+	}
+	else{
+		DEBUG = 0;
+	}
+
 	//must have one argument - the port number
-	if(argc < 2){
+	if(argc < (2+offset)){
 		print_use_and_exit();
 	}
 	
 	//initialize the clients
 	client1 = calloc(1,sizeof(CLIENT));
 	client2 = calloc(1,sizeof(CLIENT));
-	
-	int port = atoi(argv[1]);
+	challenge = calloc(64,sizeof(char));
+	int port = atoi(argv[1+offset]);
 	//create a socket to bind on
+
 	//I got this from: https://www.cs.rutgers.edu/~pxk/417/notes/sockets/udp.html
-
-
 	int sock;
 	if((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0){
 		perror("Cannot create socket\n");
@@ -44,67 +56,57 @@ int main(int argc, char *argv[]){
 		printf("Ready to receive on port %d\n",port);      
 	}
 	else{
-		printf("Binding failed\n");
+		perror("Binding failed");
+		return 0;
 	}
 	//only allocate for the buffers once, and just zero it out when done processing
-	char buffer[BUFFER_SIZE];
-	char *response = calloc(BUFFER_SIZE,sizeof(char));	
+	
 	//now, infinitely wait and process requests as they come in
 	while(1){
-		printf("-----------------Waiting to receive-----------------\n");
+		if(DEBUG) printf("-----------------Waiting to receive-----------------\n");
+		if(DEBUG) printf("Allocating Buffers\n");
+		char* buffer = calloc(BUFFER_SIZE,sizeof(char));
+		char* response = calloc(BUFFER_SIZE,sizeof(char));
 		int sizeReceived = 0;
 		//allow a maximum of 1024 bytes for this login process, don't need more than that
-		sizeReceived = recvfrom(sock,buffer,sizeof(buffer),0, (struct sockaddr*)&remaddr,&addrlen);
-		printf("Message Received:%s\nMessage size:%d\nPort Received From:%d\nIP Received from: %s\n",buffer,sizeReceived,remaddr.sin_port,inet_ntoa(remaddr.sin_addr));
+		sizeReceived = recvfrom(sock,buffer,BUFFER_SIZE,0, (struct sockaddr*)&remaddr,&addrlen);
+		if(DEBUG) printf("Message Received:%s\nMessage size:%d\nPort Received From:%d\nIP Received from: %s\n",buffer,sizeReceived,remaddr.sin_port,inet_ntoa(remaddr.sin_addr));
 		//process the request
 		if(process(buffer,sizeof(buffer),port,&response)){
-			printf("Sending Response:\n%s\n",response);
+			if(DEBUG) printf("Sending Response:\n%s\n",response);
 			//send the response
 			int numBytesSent = 0;
 			if((numBytesSent = sendto(sock, response,BUFFER_SIZE,0,(struct sockaddr*)&remaddr,addrlen)) < 0){
-				perror("Failed on sending challenge");
+				perror("Failed on sending response");
 				return 0;
 			}
-		}		
-		//zero out the recv and response buffers
-		memset(buffer,0,BUFFER_SIZE);
-		memset(response,0,BUFFER_SIZE);
-		
+		}				
 	}
 	return 0;
 }
 
 void print_use_and_exit(){
-	fprintf(stderr,"Usage:  server-udp port\n\n");
+	fprintf(stderr,"Usage:  server-udp [-d] port\n\n");
 	exit (EXIT_FAILURE);
 }
 
 int process(char* message,int sizeOfBuffer, int port, char ** response){
 	//make sure there is a newline character, that signifies the end of a request
-	char* buffer = message;
-	int numChars = 0;
-	int foundNewLine = 0;
-	while(1){
-		char* current = &buffer[numChars];
-		if(numChars == sizeOfBuffer){
-			break;
-		}
-		if(strcmp(current,"\n") == 0){
-			foundNewLine = 1;
-			numChars--;
-			break;
-		}
-		numChars++;
-	}
-	if(foundNewLine){
+	if(DEBUG) printf("Starting messsage processing\n");
+	//find the newLine
+	char* newLine = strchr(message,'\n');
+	if(newLine != NULL){
 		//valid response, can actually process it
-		printf("Valid message, processing %d chars,\n",numChars);
+		int posOfNewLine = newLine - message;
+		char* buffer = calloc(posOfNewLine,sizeof(char));
+		memcpy(buffer,message,posOfNewLine);
+		if(DEBUG) printf("Valid message, processing:%s_blah\n",buffer);
 		//first 3 chars are the type of request from a client(Either REQ or RES)
 		if(strncmp(buffer,"REQ",3) == 0){
-			return process_request(&buffer[5],numChars-5,response);
+			return process_request(&buffer[5],posOfNewLine,response);
 		}
 		if(strncmp(buffer,"RES",3) == 0){
-			return process_response(&buffer[5],numChars-5,response);
+			return process_response(&buffer[5],posOfNewLine,response);
 		}
 		return 1;
 	}
@@ -114,21 +116,71 @@ int process(char* message,int sizeOfBuffer, int port, char ** response){
 }
 
 int process_response(char *buffer, int sizeOfBuffer, char ** response){
-	printf("Response to process is:%s\n",buffer);
-	return 1;
+	if(DEBUG) printf("Response to process is:%s\n",buffer);
+	int result = 0;
+	//grab the username by finding the first space
+	char* space;
+	if(DEBUG) printf("Finding space\n");
+	if((space = strchr(buffer,' ')) != NULL){
+		//username is 0 to pos
+		//MD5 is pos+1 to sizeOfBuffer
+		//find the appropriate password
+		int pos = space - buffer;
+		char* username = calloc(pos,sizeof(char));
+		memcpy(username,buffer,pos);
+		if(DEBUG) printf("Username is:%s_blah\n",username);
+		char* password;
+		int foundUserName = 0;
+		for(int i = 0; i < 3;i++){
+			if(strcmp(usernames[i],username) == 0){
+				password = passwords[i];
+				if(DEBUG) printf("Password is %s_blah\n",password);
+				if(DEBUG) printf("Challenge is %s_blah\n",challenge);
+				foundUserName = 1;
+				break;
+			}
+		}
+		if(foundUserName){
+			buffer+=(pos+1);
+			//compare the user's md5 hash with my md5 hash
+			//int size = strlen(challenge) + strlen(username) + strlen(password);
+			char* md5 = calloc(110,sizeof(char));
+			md5 = doMD5(challenge,username,password);
+
+			if(DEBUG) printf("Doing comparison:\nCalculated: %s_blah\nReceived:   %s_blah\n",md5,buffer);
+			int cmpRes = strncmp(md5,buffer,strlen(md5));
+			if(DEBUG) printf("Done with comparison, result is %d\n",cmpRes);
+			if(cmpRes == 0){
+				//have a match!
+				result = 1;
+				*response = "ACK: Welcome to our service\n";
+			}
+			else{
+				result = 1;
+				*response = "NAK: Wrong Credentials\n";
+				if(DEBUG) printf("Set response to %s\n",*response);
+			}
+		}
+	}
+	return result;
 }
 int process_request(char *buffer, int sizeOfBuffer, char ** response){
-	printf("Request to process is:%s\n",buffer);
+	if(DEBUG) printf("Request to process is:%s\n",buffer);
 	int result = 0;
-	//has to also have the text "Please Connect\n" to be a valid request
-	if(strncmp(buffer,"Please Connect\n",sizeOfBuffer) == 0){
-		printf("Valid Request\n");
+	//has to also have the text "Please Connect" to be a valid request
+	if(strncmp(buffer,"Please Connect",sizeOfBuffer) == 0){
+		if(DEBUG) printf("Valid Request\n");
 		char * genString = generate_string();
-		printf("String returned was %s\n",genString);
+		if(DEBUG) printf("String returned was %s\n",genString);
+		challenge =  genString;
+		//test MD5
+		//char* test = calloc(110,sizeof(char));
+		//test = doMD5(genString,"user1","pass1");
 		char *head = "CHA: ";
 		strcat(*response,head);
 		strcat(*response,genString);
 		strcat(*response,"\n");
+		
 		result = 1;
 	}
 	return result;
@@ -149,4 +201,18 @@ char * generate_string(){
     }
     *dest = '\0';
 	return result;
+}
+
+char* doMD5(char* buffer, char* username, char* password){
+	//concat the 3 strings
+	unsigned char *temp = calloc(strlen(buffer)+strlen(username)+strlen(password),sizeof(char));
+	strcat(temp,username);
+	strcat(temp,buffer);
+	strcat(temp,password);
+	char* output = md5(temp,strlen(temp));
+	//have to do this, because for some reason 3 extra bytes get added
+	char* value = calloc(16,sizeof(char));
+	memcpy(value,output,16);
+	if(DEBUG) printf("MD5 hash is:%s_blah\nLength is %d\nStrlen of temp:%d\n",value,strlen(value),strlen(temp));
+	return value;
 }

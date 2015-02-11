@@ -23,14 +23,10 @@ typedef struct _CONN_INFO{
 	struct sockaddr *addr;
 } CONN_INFO;*/
 
-typedef struct _MESSAGE{
-	char buffer[1024];
-	int type;
-} MESSAGE;
-
 typedef struct _CLIENT{
-	int last_type;
 	int port;
+	char* ip;
+	char challenge[64];
 } CLIENT;
 
 //function declarations
@@ -39,6 +35,8 @@ int process(char* buffer, int sizeOfBuffer, int port,char ** response);
 int process_response(char *buffer, int sizeOfBuffer, char ** response);
 int process_request(char *buffer, int sizeOfBuffer, char ** response);
 char * generate_string(void);
+char* doMD5(char* buffer, char* username,char* password);
+unsigned *md5( const char *msg, int mlen);
 //CONN_INFO* setup_socket(char* port);
 
 
