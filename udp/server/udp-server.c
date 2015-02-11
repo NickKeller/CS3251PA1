@@ -6,6 +6,7 @@ char *passwords[] = {"pass1","pass2","pass3"};
 
 CLIENT* client1;
 CLIENT* client2;
+CLIENT* current_client;
 
 char* REQ_MSG = "REQ";
 char* RES_MSG = "RES";
@@ -32,6 +33,7 @@ int main(int argc, char *argv[]){
 	//initialize the clients
 	client1 = calloc(1,sizeof(CLIENT));
 	client2 = calloc(1,sizeof(CLIENT));
+	current_client = calloc(1,sizeof(CLIENT));
 	challenge = calloc(64,sizeof(char));
 	int port = atoi(argv[1+offset]);
 	//create a socket to bind on
@@ -59,7 +61,7 @@ int main(int argc, char *argv[]){
 		perror("Binding failed");
 		return 0;
 	}
-	//only allocate for the buffers once, and just zero it out when done processing
+	
 	
 	//now, infinitely wait and process requests as they come in
 	while(1){
@@ -71,6 +73,8 @@ int main(int argc, char *argv[]){
 		//allow a maximum of 1024 bytes for this login process, don't need more than that
 		sizeReceived = recvfrom(sock,buffer,BUFFER_SIZE,0, (struct sockaddr*)&remaddr,&addrlen);
 		if(DEBUG) printf("Message Received:%s\nMessage size:%d\nPort Received From:%d\nIP Received from: %s\n",buffer,sizeReceived,remaddr.sin_port,inet_ntoa(remaddr.sin_addr));
+		//figure out the client
+		figureOutClient(remaddr);
 		//process the request
 		if(process(buffer,sizeof(buffer),port,&response)){
 			if(DEBUG) printf("Sending Response:\n%s\n",response);
@@ -80,7 +84,9 @@ int main(int argc, char *argv[]){
 				perror("Failed on sending response");
 				return 0;
 			}
-		}				
+		}
+		//clear the current client, we're done
+		current_client->port = -1;			
 	}
 	return 0;
 }
@@ -161,8 +167,12 @@ int process_response(char *buffer, int sizeOfBuffer, char ** response){
 				if(DEBUG) printf("Set response to %s\n",*response);
 			}
 		}
+		else{
+			*response = "NAK: Wrong Credentials\n";
+		}
 	}
-	return result;
+
+	return 1;
 }
 int process_request(char *buffer, int sizeOfBuffer, char ** response){
 	if(DEBUG) printf("Request to process is:%s\n",buffer);
@@ -172,7 +182,7 @@ int process_request(char *buffer, int sizeOfBuffer, char ** response){
 		if(DEBUG) printf("Valid Request\n");
 		char * genString = generate_string();
 		if(DEBUG) printf("String returned was %s\n",genString);
-		challenge =  genString;
+		memcpy(current_client->challenge,genString,64);
 		//test MD5
 		//char* test = calloc(110,sizeof(char));
 		//test = doMD5(genString,"user1","pass1");
@@ -193,7 +203,7 @@ char * generate_string(){
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     int length = 64;
     char * result = calloc(length,sizeof(char));
-    srand(time(NULL));
+    srand(time(NULL)+current_client->port);
     char * dest = result;
     while (length-- > 0) {
         size_t index = (double) rand() / RAND_MAX * (sizeof charset - 1);
@@ -215,4 +225,26 @@ char* doMD5(char* buffer, char* username, char* password){
 	memcpy(value,output,16);
 	if(DEBUG) printf("MD5 hash is:%s_blah\nLength is %d\nStrlen of temp:%d\n",value,strlen(value),strlen(temp));
 	return value;
+}
+
+void figureOutClient(struct sockaddr_in remaddr){
+	int port = remaddr.sin_port;
+	char* ip = inet_ntoa(remaddr.sin_addr);
+	//first, check for an available client
+	if(client1->port == -1){
+		client1->port = port;
+		client1->ip = ip;
+		current_client = client1;
+	}
+	else if(client2->port == -1){
+		client2->port = port;
+		client2->ip = ip;
+		current_client = client2;
+	}
+	else if((client1->port == port) && (strcmp(client1->ip,ip) == 0)){
+		current_client = client1;
+	}
+	else if((client2->port == port) && (strcmp(client2->ip,ip) == 0)){
+		current_client = client2;
+	}
 }

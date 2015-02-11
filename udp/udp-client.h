@@ -12,8 +12,6 @@
 #ifndef UDP_CLIENT_H
 #define UDP_CLIENT_H
 
-enum{REQ=0,CHA,RESP,ACK,NACK};
-
 typedef struct _CONN_INFO{
 	int socket;
 	socklen_t addrlen;
@@ -25,5 +23,5 @@ void print_use_and_exit(void);
 CONN_INFO* setup_socket(char* host, char* port);
 char* doMD5(char* buffer,char* username,char* password);
 unsigned *md5( const char *msg, int mlen);
-int timeout_recvfrom (int sock, char *buf, int *length, struct sockaddr_in *connection, int timeoutinseconds);
+int timeout_recvfrom (int sock, char *buf, int bufSize, int flags, struct sockaddr *connection, socklen_t *addrlen,int timeoutinseconds);
 #endif//end udp-client.h

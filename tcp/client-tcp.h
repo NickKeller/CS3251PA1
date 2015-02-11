@@ -12,27 +12,17 @@
 #ifndef TCP_CLIENT_H
 #define TCP_CLIENT_H
 
-enum{REQ=0,CHA,RESP,ACK,NACK};
-
 typedef struct _CONN_INFO{
 	int socket;
 	socklen_t addrlen;
 	struct sockaddr *addr;
 } CONN_INFO;
 
-typedef struct _MESSAGE{
-	char buffer[1024];
-	int type;
-} MESSAGE;
-
-typedef struct _CLIENT{
-	int last_type;
-	int port;
-} CLIENT;
-
 //function declarations
 void print_use_and_exit(void);
-CONN_INFO* setup_socket(char*ip, char* port);
+CONN_INFO* setup_socket(char* host, char* port);
+char* doMD5(char* buffer,char* username,char* password);
+unsigned *md5( const char *msg, int mlen);
 
 
 #endif//end client-tcp.h

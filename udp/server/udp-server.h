@@ -14,8 +14,6 @@
 #define UDP_SERVER_H
 
 #define BUFFER_SIZE 100
-
-enum{REQ=0,CHA,RESP,ACK,NACK};
 /*
 typedef struct _CONN_INFO{
 	int socket;
@@ -37,6 +35,7 @@ int process_request(char *buffer, int sizeOfBuffer, char ** response);
 char * generate_string(void);
 char* doMD5(char* buffer, char* username,char* password);
 unsigned *md5( const char *msg, int mlen);
+void figureOutClient(struct sockaddr_in remaddr);
 //CONN_INFO* setup_socket(char* port);
 
 

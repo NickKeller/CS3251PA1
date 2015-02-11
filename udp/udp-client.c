@@ -36,8 +36,8 @@ int main(int argc, char *argv[]){
 	//wait for a response
 	char recvBuffer[100];
 	int size = sizeof(recvBuffer);
-	int numBytesRecv = recvfrom(connection->socket,recvBuffer,size,0,
-								connection->remote_addr,&(connection->addrlen));
+	int numBytesRecv = timeout_recvfrom(connection->socket,recvBuffer,size,0,
+								connection->remote_addr,&(connection->addrlen),2);
 
 	if(DEBUG) printf("Received message: %s\n",recvBuffer);
 	//compute md5 hash
@@ -130,7 +130,7 @@ char* doMD5(char* buffer, char* username, char* password){
 }
 
 
-int timeout_recvfrom (int sock, char *buf, int *length, struct sockaddr_in *connection, int timeoutinseconds)
+int timeout_recvfrom (int sock, char *buf, int bufSize, int flags, struct sockaddr *connection, socklen_t *addrlen,int timeoutinseconds)
 {
     fd_set socks;
     struct timeval t;
@@ -140,7 +140,7 @@ int timeout_recvfrom (int sock, char *buf, int *length, struct sockaddr_in *conn
     printf("Starting Select\n");
     select(sock + 1, &socks, NULL, NULL, &t);
     printf("Done with select\n");
-    if (recvfrom(sock, buf, *length, 0, (struct sockaddr *)connection, length)!=-1)
+    if (recvfrom(sock, buf, bufSize, 0, connection, addrlen)!=-1)
         {
         return 1;
         }
