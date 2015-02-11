@@ -37,7 +37,7 @@ int main(int argc, char *argv[]){
 	char recvBuffer[100];
 	int size = sizeof(recvBuffer);
 	int numBytesRecv = timeout_recvfrom(connection->socket,recvBuffer,size,0,
-								connection->remote_addr,&(connection->addrlen),2);
+								connection->remote_addr,&(connection->addrlen),2,request);
 
 	if(DEBUG) printf("Received message: %s\n",recvBuffer);
 	//compute md5 hash
@@ -73,8 +73,8 @@ int main(int argc, char *argv[]){
 							connection->remote_addr,connection->addrlen);
 	//wait for a response
 	memset(recvBuffer,0,100);
-	numBytesRecv = recvfrom(connection->socket,recvBuffer,sizeof(recvBuffer),0,
-								connection->remote_addr,&(connection->addrlen));
+	numBytesRecv = timeout_recvfrom(connection->socket,recvBuffer,sizeof(recvBuffer),0,
+								connection->remote_addr,&(connection->addrlen),2,respBuffer);
 
 	printf("%s\n",&recvBuffer[5]);
 
@@ -130,16 +130,39 @@ char* doMD5(char* buffer, char* username, char* password){
 }
 
 
-int timeout_recvfrom (int sock, char *buf, int bufSize, int flags, struct sockaddr *connection, socklen_t *addrlen,int timeoutinseconds)
+int timeout_recvfrom (int sock, char *buf, int bufSize, int flags, struct sockaddr *connection, socklen_t *addrlen,int timeoutinseconds,char* messageToSend)
 {
     fd_set socks;
     struct timeval t;
+    t.tv_usec=0;
     FD_ZERO(&socks);
     FD_SET(sock, &socks);
     t.tv_sec = timeoutinseconds;
-    printf("Starting Select\n");
-    select(sock + 1, &socks, NULL, NULL, &t);
-    printf("Done with select\n");
+    if(DEBUG) printf("Starting Select\n");
+    int tries = 0;
+    while(select(sock + 1, &socks, NULL, NULL, &t) <= 0){
+    	//timeout, send again
+    	tries++;
+    	//don't try more than 5 times
+    	if(tries == 5){
+	    	printf("Cannot connect to server\n");
+	    	exit(0);
+    	}
+    	printf("Connection Timeout - Trying again\n");
+    	t.tv_sec = timeoutinseconds;
+    	int res = 0;
+    	while(res <= 0){
+    		res = sendto(sock,messageToSend,strlen(messageToSend),0,connection,*addrlen);
+			printf("Sent %d bytes\n",res);
+			if(res == -1){
+				printf("Error\n");
+			}    		
+    	}
+    	printf("Done Sending\n");
+    	FD_ZERO(&socks);
+	    FD_SET(sock, &socks);
+    }
+    if(DEBUG) printf("Done with select\n");
     if (recvfrom(sock, buf, bufSize, 0, connection, addrlen)!=-1)
         {
         return 1;

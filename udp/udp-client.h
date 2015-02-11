@@ -23,5 +23,5 @@ void print_use_and_exit(void);
 CONN_INFO* setup_socket(char* host, char* port);
 char* doMD5(char* buffer,char* username,char* password);
 unsigned *md5( const char *msg, int mlen);
-int timeout_recvfrom (int sock, char *buf, int bufSize, int flags, struct sockaddr *connection, socklen_t *addrlen,int timeoutinseconds);
+int timeout_recvfrom (int sock, char *buf, int bufSize, int flags, struct sockaddr *connection, socklen_t *addrlen,int timeoutinseconds,char* messageToSend);
 #endif//end udp-client.h
