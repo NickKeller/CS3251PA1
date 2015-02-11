@@ -74,7 +74,7 @@ int main(int argc, char *argv[]){
 		sizeReceived = recvfrom(sock,buffer,BUFFER_SIZE,0, (struct sockaddr*)&remaddr,&addrlen);
 		if(DEBUG) printf("Message Received:%s\nMessage size:%d\nPort Received From:%d\nIP Received from: %s\n",buffer,sizeReceived,remaddr.sin_port,inet_ntoa(remaddr.sin_addr));
 		//figure out the client
-		figureOutClient(remaddr);
+		//figureOutClient(remaddr);
 		//process the request
 		if(process(buffer,sizeof(buffer),port,&response)){
 			if(DEBUG) printf("Sending Response:\n%s\n",response);
@@ -182,7 +182,8 @@ int process_request(char *buffer, int sizeOfBuffer, char ** response){
 		if(DEBUG) printf("Valid Request\n");
 		char * genString = generate_string();
 		if(DEBUG) printf("String returned was %s\n",genString);
-		memcpy(current_client->challenge,genString,64);
+		//memcpy(current_client->challenge,genString,64);
+		challenge = genString;
 		//test MD5
 		//char* test = calloc(110,sizeof(char));
 		//test = doMD5(genString,"user1","pass1");
@@ -203,7 +204,7 @@ char * generate_string(){
                      "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     int length = 64;
     char * result = calloc(length,sizeof(char));
-    srand(time(NULL)+current_client->port);
+    srand(time(NULL));//+current_client->port);
     char * dest = result;
     while (length-- > 0) {
         size_t index = (double) rand() / RAND_MAX * (sizeof charset - 1);
