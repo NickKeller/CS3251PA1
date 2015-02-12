@@ -30,7 +30,12 @@ To run the program:
 SERVER: ./server-protocol [-d] port
 CLIENT: ./client-protocol [-d] ipAddress[:port] username password
 -If you get it wrong, it will tell you that you got it wrong
--ipAddress can be in the format "xxx.xxx.xxx.xxx", or it can be a host name
+-ipAddress can be an actual ip address, or it can be a host name
+
+Available usernames and passwords
+user1 - pass1
+user2 - pass2
+user123 - pass3
 
 DESCRIPTION OF PROTOCOL EXCHANGE:
 

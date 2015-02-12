@@ -131,6 +131,7 @@ void print_use_and_exit(){
 }
 
 char* doMD5(char* buffer, char* username, char* password){
+	//md5 code gotten from http://rosettacode.org/wiki/MD5#C
 	//concat the 3 strings
 	unsigned char *temp = calloc(strlen(buffer)+strlen(username)+strlen(password),sizeof(char));
 	strcat(temp,username);
