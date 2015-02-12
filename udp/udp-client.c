@@ -5,7 +5,7 @@ CONN_INFO* connection;
 
 int main(int argc, char *argv[]){
 	
-
+	//grab arguments
 	int opts;
 	int offset = 0;
 	if((opts = getopt(argc,argv,"d")) != -1){
@@ -16,13 +16,29 @@ int main(int argc, char *argv[]){
 		DEBUG = 0;
 	}
 
-	if(argc < (5+offset)){
+	if(argc < (4+offset)){
 		print_use_and_exit();
 	}
-	char* ip = argv[1+offset];
-	char* port = argv[2+offset];
-	char* username = argv[3+offset];
-	char* password = argv[4+offset];
+	char* tempip = argv[1+offset];
+	char* ip = tempip;
+	char* port = "5000";
+	char* username = argv[2+offset];
+	char* password = argv[3+offset];
+	char* colon_loc = strchr(tempip,':');
+	//if no port is given, port will default to 5000
+	if(colon_loc != NULL){
+		int colon_index = colon_loc - tempip;
+		int size = strlen(tempip) - colon_index - 1;
+		port = calloc(size, sizeof(char));
+		memcpy(port,&tempip[colon_index+1],size);
+		//take the port of the IP address 
+		int ipSize = strlen(tempip) - size - 1;
+		ip = calloc(ipSize,sizeof(char));
+		memcpy(ip,tempip,ipSize);
+	}
+	
+	printf("Connecting to server: %s on port: %s\n",ip,port);
+	
 	//create a socket
 	connection = setup_socket(ip,port);
 	//created socket, now to make data and sendto my server
@@ -61,12 +77,14 @@ int main(int argc, char *argv[]){
 	//build the response buffer
 	char* respHead = "RES: ";
 	char* respBuffer = calloc(100,sizeof(char));
-
+	
+	//Concatenate previous stuff to get "RES: username hash\n" format
 	strcat(respBuffer,respHead);
 	strcat(respBuffer,username);
 	strcat(respBuffer," ");
 	strcat(respBuffer,md5Res);
 	strcat(respBuffer,"\n");
+
 	if(DEBUG) printf("Sending Response:\n%s_blah\n",respBuffer);
 	//send off the response
 	numBytesSent = sendto(connection->socket,respBuffer,strlen(respBuffer),0,
@@ -83,10 +101,14 @@ int main(int argc, char *argv[]){
 }
 
 void print_use_and_exit(){
-	fprintf(stderr,"Usage:  client-udp [-d] ip port username password\n\n"); 
+	fprintf(stderr,"Usage:  client-udp [-d] ip[:port] username password\n\n"); 
 	exit (EXIT_FAILURE);
 }
 
+/*
+**************************************************************
+*This code was taken from when I took CS2200, sets up a socket
+**************************************************************/
 CONN_INFO* setup_socket(char* host, char* port){
 	//this code was from my CS2200 class, for the networking project we did
 	struct addrinfo *connections, *conn = NULL;
@@ -108,8 +130,8 @@ CONN_INFO* setup_socket(char* host, char* port){
 		break;
 	}
 	if(conn == NULL){
-		perror("Failed to find and bind a socket\n");
-		return NULL;
+		printf("Failed to find and bind a socket\n");
+		print_use_and_exit();
 	}
 	CONN_INFO* conn_info = malloc(sizeof(CONN_INFO));
 	conn_info->socket = sock;
@@ -119,8 +141,10 @@ CONN_INFO* setup_socket(char* host, char* port){
 }
 
 char* doMD5(char* buffer, char* username, char* password){
+	//md5 code gotten from http://rosettacode.org/wiki/MD5#C
 	//concat the 3 strings
 	unsigned char *temp = calloc(strlen(buffer)+strlen(username)+strlen(password),sizeof(char));
+	//hash looks like "usernameBufferPassword" when passed to md5
 	strcat(temp,username);
 	strcat(temp,buffer);
 	strcat(temp,password);
@@ -132,6 +156,7 @@ char* doMD5(char* buffer, char* username, char* password){
 
 int timeout_recvfrom (int sock, char *buf, int bufSize, int flags, struct sockaddr *connection, socklen_t *addrlen,int timeoutinseconds,char* messageToSend)
 {
+	//I got this code from my dad
     fd_set socks;
     struct timeval t;
     t.tv_usec=0;
@@ -144,23 +169,26 @@ int timeout_recvfrom (int sock, char *buf, int bufSize, int flags, struct sockad
     	//timeout, send again
     	tries++;
     	//don't try more than 5 times
-    	if(tries == 5){
+    	if(tries > 5){
 	    	printf("Cannot connect to server\n");
 	    	exit(0);
     	}
-    	printf("Connection Timeout - Trying again\n");
+    	printf("Connection Timeout - Attempt %d\n",tries);
+	//reset timer value
     	t.tv_sec = timeoutinseconds;
     	int res = 0;
+	//ensure a successful resend
     	while(res <= 0){
     		res = sendto(sock,messageToSend,strlen(messageToSend),0,connection,*addrlen);
-			printf("Sent %d bytes\n",res);
+			if(DEBUG) printf("Sent %d bytes\n",res);
 			if(res == -1){
-				printf("Error\n");
+				if(DEBUG)printf("Error\n");
 			}    		
     	}
-    	printf("Done Sending\n");
+    	if(DEBUG) printf("Done Sending\n");
+	//have to reset this, otherwise if if fails to connect once, it will continue to fail even if the server comes back online
     	FD_ZERO(&socks);
-	    FD_SET(sock, &socks);
+	FD_SET(sock, &socks);
     }
     if(DEBUG) printf("Done with select\n");
     if (recvfrom(sock, buf, bufSize, 0, connection, addrlen)!=-1)

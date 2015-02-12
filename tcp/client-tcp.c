@@ -16,13 +16,28 @@ int main(int argc, char *argv[]){
 		DEBUG = 0;
 	}
 
-	if(argc < (5+offset)){
+	if(argc < (4+offset)){
 		print_use_and_exit();
 	}
-	char* ip = argv[1+offset];
-	char* port = argv[2+offset];
-	char* username = argv[3+offset];
-	char* password = argv[4+offset];
+		char* tempip = argv[1+offset];
+	char* ip = tempip;
+	char* port = "5000";
+	char* username = argv[2+offset];
+	char* password = argv[3+offset];
+	char* colon_loc = strchr(tempip,':');
+	//if no port is given, port will default to 5000
+	if(colon_loc != NULL){
+		int colon_index = colon_loc - tempip;
+		int size = strlen(tempip) - colon_index - 1;
+		port = calloc(size, sizeof(char));
+		memcpy(port,&tempip[colon_index+1],size);
+		//take the port of the IP address 
+		int ipSize = strlen(tempip) - size - 1;
+		ip = calloc(ipSize,sizeof(char));
+		memcpy(ip,tempip,ipSize);
+	}
+	
+	printf("Connecting to server: %s on port: %s\n",ip,port);
 	//create a socket to connect on
 	connection = setup_socket(ip,port);
 	if(connect(connection->socket,connection->addr,connection->addrlen) < 0){
@@ -100,8 +115,8 @@ CONN_INFO* setup_socket(char* host, char* port){
 		break;
 	}
 	if(conn == NULL){
-		perror("Failed to find and bind a socket\n");
-		return NULL;
+		printf("Failed to find and bind a socket\n");
+		print_use_and_exit();
 	}
 	CONN_INFO* conn_info = malloc(sizeof(CONN_INFO));
 	conn_info->socket = sock;
@@ -111,7 +126,7 @@ CONN_INFO* setup_socket(char* host, char* port){
 }
 
 void print_use_and_exit(){
-	fprintf(stderr,"Usage:  client-tcp [-d] ip port username password\n\n"); 
+	fprintf(stderr,"Usage:  client-tcp [-d] ip[:port] username password\n\n"); 
 	exit (EXIT_FAILURE);
 }
 

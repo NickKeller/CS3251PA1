@@ -1,7 +1,7 @@
 #include "udp-server.h"
 
 //usernames and passwords
-char *usernames[] = {"user1","user2","user3"};
+char *usernames[] = {"user1","user2","user123"};
 char *passwords[] = {"pass1","pass2","pass3"};
 
 CLIENT* client1;

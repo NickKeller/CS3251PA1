@@ -1,15 +1,8 @@
 #include "server-tcp.h"
 
 //usernames and passwords
-char *usernames[] = {"user1","user2","user3"};
+char *usernames[] = {"user1","user2","user123"};
 char *passwords[] = {"pass1","pass2","pass3"};
-
-CLIENT* client1;
-CLIENT* client2;
-CLIENT* current_client;
-
-char* REQ_MSG = "REQ";
-char* RES_MSG = "RES";
 
 int DEBUG;
 char *challenge;
@@ -30,10 +23,6 @@ int main(int argc, char *argv[]){
 		print_use_and_exit();
 	}
 	
-	//initialize the clients
-	client1 = calloc(1,sizeof(CLIENT));
-	client2 = calloc(1,sizeof(CLIENT));
-	current_client = calloc(1,sizeof(CLIENT));
 	challenge = calloc(64,sizeof(char));
 	int port = atoi(argv[1+offset]);
 	//set up a tcp socket, and allow it to be reused
@@ -249,24 +238,3 @@ char* doMD5(char* buffer, char* username, char* password){
 	return value;
 }
 
-void figureOutClient(struct sockaddr_in remaddr){
-	int port = remaddr.sin_port;
-	char* ip = inet_ntoa(remaddr.sin_addr);
-	//first, check for an available client
-	if(client1->port == -1){
-		client1->port = port;
-		client1->ip = ip;
-		current_client = client1;
-	}
-	else if(client2->port == -1){
-		client2->port = port;
-		client2->ip = ip;
-		current_client = client2;
-	}
-	else if((client1->port == port) && (strcmp(client1->ip,ip) == 0)){
-		current_client = client1;
-	}
-	else if((client2->port == port) && (strcmp(client2->ip,ip) == 0)){
-		current_client = client2;
-	}
-}
