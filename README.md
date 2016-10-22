@@ -1,4 +1,6 @@
-S 3251 - Computer Networks I
+Below lists the assignment description from my professor at Georgia Tech. My personal writeup is in WRITEUP.md
+
+CS 3251 - Computer Networks I
  
 Sockets Programming Assignment 1 
  
